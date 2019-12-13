@@ -43,3 +43,15 @@ case class Contains(value: Value) extends Method {
 }
 
 case class Value(v: String)
+
+trait Action
+
+case class Assignment(name: VarName, value: VarValue) extends Action {
+  override def toString: String = s"${name.v} = ${value.v}"
+}
+
+case class VarName(v: String) {
+  def is(value: VarValue): Assignment = Assignment(this, value)
+}
+
+case class VarValue(v: String)

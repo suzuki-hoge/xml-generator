@@ -24,4 +24,10 @@ class PartsTest extends FunSuite {
 
     assert(test4.toString == "OR(AND(status equals ng, reason contains system), AND(status equals ng, reason contains system))")
   }
+
+  test("assignment") {
+    val action1 = "check" is "pass"
+
+    assert(action1.toString == "check = pass")
+  }
 }
