@@ -55,3 +55,21 @@ case class VarName(v: String) {
 }
 
 case class VarValue(v: String)
+
+case class Statement(testable: Testable, var thenActions: Seq[Action], var elseActions: Seq[Action]) {
+  def _then(actions: Action*): Statement = {
+    thenActions = actions
+    this
+  }
+
+  def _else(actions: Action*): Statement = {
+    elseActions = actions
+    this
+  }
+
+  override def toString: String = s"$testable then (${thenActions.mkString(", " )}) else (${elseActions.mkString(", ")})"
+}
+
+object Statement {
+  def If(testable: Testable): Statement = Statement(testable, null, null)
+}
