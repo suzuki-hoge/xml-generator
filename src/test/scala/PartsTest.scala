@@ -1,5 +1,4 @@
 import ImplicitConverters._
-import Statement.If
 import org.scalatest.FunSuite
 
 class PartsTest extends FunSuite {
