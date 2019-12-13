@@ -26,7 +26,11 @@ object Or extends Operator {
   override def toString: String = "OR"
 }
 
-case class Key(v: String)
+case class Key(v: String) {
+  def $equals(value: Value): Cond = Cond(this, Equals(value))
+
+  def $contains(value: Value): Cond = Cond(this, Contains(value))
+}
 
 trait Method
 
