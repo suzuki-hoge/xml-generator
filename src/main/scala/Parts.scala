@@ -1,4 +1,6 @@
-case class Cond(key: Key, method: Method) {
+trait Testable
+
+case class Cond(key: Key, method: Method) extends Testable {
   def and(other: Cond): Test = Test(this, other, And)
 
   def or(other: Cond): Test = Test(this, other, Or)
@@ -6,8 +8,12 @@ case class Cond(key: Key, method: Method) {
   override def toString: String = s"${key.v} $method"
 }
 
-case class Test(cond1: Cond, cond2: Cond, operator: Operator) {
-  override def toString: String = s"$operator($cond1, $cond2)"
+case class Test(testable1: Testable, testable2: Testable, operator: Operator) extends Testable {
+  def and(other: Testable): Test = Test(this, other, And)
+
+  def or(other: Testable): Test = Test(this, other, Or)
+
+  override def toString: String = s"$operator($testable1, $testable2)"
 }
 
 trait Operator
