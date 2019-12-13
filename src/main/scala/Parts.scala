@@ -1,5 +1,5 @@
 trait Testable {
-  def toXml(): String
+  def toXml(indent: Indent): String
 }
 
 case class Cond(key: Key, method: Method) extends Testable {
@@ -7,11 +7,11 @@ case class Cond(key: Key, method: Method) extends Testable {
 
   def ||(other: Testable): Test = Test(this, other, Or)
 
-  override def toXml(): String =
-    s"""<cond>
-       |${key.toXml()}
-       |${method.toXml()}
-       |</cond>""".stripMargin
+  override def toXml(indent: Indent): String =
+    s"""$indent<cond>
+       |${key.toXml(indent + 1)}
+       |${method.toXml(indent + 1)}
+       |$indent</cond>""".stripMargin
 }
 
 case class Test(testable1: Testable, testable2: Testable, operator: Operator) extends Testable {
@@ -19,11 +19,11 @@ case class Test(testable1: Testable, testable2: Testable, operator: Operator) ex
 
   def ||(other: Testable): Test = Test(this, other, Or)
 
-  override def toXml(): String =
-    s"""<test type="$operator">
-       |${testable1.toXml()}
-       |${testable2.toXml()}
-       |</test>""".stripMargin
+  override def toXml(indent: Indent): String =
+    s"""$indent<test type="$operator">
+       |${testable1.toXml(indent + 1)}
+       |${testable2.toXml(indent + 1)}
+       |$indent</test>""".stripMargin
 }
 
 trait Operator
@@ -41,43 +41,43 @@ case class Key(v: String) {
 
   def $contains(value: Value): Cond = Cond(this, Contains(value))
 
-  def toXml(): String = s"<key>$v</key>"
+  def toXml(indent: Indent): String = s"$indent<key>$v</key>"
 }
 
 trait Method {
-  def toXml(): String
+  def toXml(indent: Indent): String
 }
 
 case class Equals(value: Value) extends Method {
-  override def toXml(): String = s"<val>%equal(${value.v})</val>"
+  override def toXml(indent: Indent): String = s"$indent<val>%equal(${value.v})</val>"
 }
 
 case class Contains(value: Value) extends Method {
-  override def toXml(): String = s"<val>%contains(${value.v})</val>"
+  override def toXml(indent: Indent): String = s"$indent<val>%contains(${value.v})</val>"
 }
 
 case class Value(v: String)
 
 trait Action {
-  def toXml():String
+  def toXml(indent: Indent): String
 }
 
 case class Assignment(name: VarName, value: VarValue) extends Action {
-  override def toXml(): String =
-    s"""<action>
-       |${name.toXml()}
-       |${value.toXml()}
-       |</action>""".stripMargin
+  override def toXml(indent: Indent): String =
+    s"""$indent<action>
+       |${name.toXml(indent + 1)}
+       |${value.toXml(indent + 1)}
+       |$indent</action>""".stripMargin
 }
 
 case class VarName(v: String) {
   def is(value: VarValue): Assignment = Assignment(this, value)
 
-  def toXml(): String = s"<key>$v</key>"
+  def toXml(indent: Indent): String = s"$indent<key>$v</key>"
 }
 
 case class VarValue(v: String) {
-  def toXml(): String = s"<val>$v</val>"
+  def toXml(indent: Indent): String = s"$indent<val>$v</val>"
 }
 
 case class If(testable: Testable) {
@@ -91,19 +91,25 @@ case class Then(testable: Testable, thenActions: Seq[Action]) {
 case class Statement(testable: Testable, thenActions: Seq[Action], elseActions: Seq[Action]) {
   def toXml: String =
     s"""<cond_rule>
-       |<conds>
-       |${testable.toXml()}
-       |<true action="true_action" />
-       |<false action="false_action" />
-       |</conds>
+       |  <conds>
+       |${testable.toXml(Indent(2))}
+       |    <true action="true_action" />
+       |    <false action="false_action" />
+       |  </conds>
        |</cond_rule>
        |
        |<action_rule>
-       |<actions action="true_action">
-       |${thenActions.map(_.toXml()).mkString("\n")}
-       |</actions>
-       |<actions action="false_action">
-       |${elseActions.map(_.toXml()).mkString("\n")}
-       |</actions>
+       |  <actions action="true_action">
+       |${thenActions.map(_.toXml(Indent(2))).mkString("\n")}
+       |  </actions>
+       |  <actions action="false_action">
+       |${elseActions.map(_.toXml(Indent(2))).mkString("\n")}
+       |  </actions>
        |</action_rule>""".stripMargin
+}
+
+case class Indent(v: Int) {
+  def +(n: Int): Indent = Indent(v + n)
+
+  override def toString: String = "  " * v
 }
