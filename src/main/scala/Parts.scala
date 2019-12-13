@@ -1,9 +1,9 @@
 trait Testable
 
 case class Cond(key: Key, method: Method) extends Testable {
-  def and(other: Cond): Test = Test(this, other, And)
+  def and(other: Testable): Test = Test(this, other, And)
 
-  def or(other: Cond): Test = Test(this, other, Or)
+  def or(other: Testable): Test = Test(this, other, Or)
 
   override def toString: String = s"${key.v} $method"
 }

@@ -15,6 +15,12 @@ class PartsTest extends FunSuite {
 
     assert(test2.toString == "OR(AND(status equals ng, reason contains system), status equals ok)")
 
-    //val test3 = cond3.or(test1)
+    val test3 = cond3.or(test1)
+
+    assert(test3.toString == "OR(status equals ok, AND(status equals ng, reason contains system))")
+
+    val test4 = test1.or(test1)
+
+    assert(test4.toString == "OR(AND(status equals ng, reason contains system), AND(status equals ng, reason contains system))")
   }
 }
