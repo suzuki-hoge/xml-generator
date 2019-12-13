@@ -1,7 +1,7 @@
 import scala.util.parsing.combinator.JavaTokenParsers
 
 object XmlParser extends JavaTokenParsers {
-  def key: Parser[String] = "<key>" ~> identifier <~ "</key>" ^^ (v => v)
+  def key: Parser[Key] = "<key>" ~> identifier <~ "</key>" ^^ Key
 
   private def identifier: Parser[String] = "[a-z_]+".r
 
