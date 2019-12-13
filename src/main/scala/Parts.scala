@@ -1,17 +1,17 @@
 trait Testable
 
 case class Cond(key: Key, method: Method) extends Testable {
-  def and(other: Testable): Test = Test(this, other, And)
+  def &&(other: Testable): Test = Test(this, other, And)
 
-  def or(other: Testable): Test = Test(this, other, Or)
+  def ||(other: Testable): Test = Test(this, other, Or)
 
   override def toString: String = s"${key.v} $method"
 }
 
 case class Test(testable1: Testable, testable2: Testable, operator: Operator) extends Testable {
-  def and(other: Testable): Test = Test(this, other, And)
+  def &&(other: Testable): Test = Test(this, other, And)
 
-  def or(other: Testable): Test = Test(this, other, Or)
+  def ||(other: Testable): Test = Test(this, other, Or)
 
   override def toString: String = s"$operator($testable1, $testable2)"
 }
