@@ -1,0 +1,22 @@
+<cond_rule>
+    <conds>
+        <test type="OR">
+            <test type="AND">
+                <cond>
+                    <key>status</key>
+                    <val>%equal(ng)</val>
+                </cond>
+                <cond>
+                    <key>reason</key>
+                    <val>%contains(system)</val>
+                </cond>
+            </test>
+            <cond>
+                <key>status</key>
+                <val>%equal(ok)</val>
+            </cond>
+        </test>
+        <true action="true_action" />
+        <false action="false_action" />
+    </conds>
+</cond_rule>

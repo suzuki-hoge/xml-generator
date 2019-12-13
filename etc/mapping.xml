@@ -1,0 +1,18 @@
+<action_rule>
+    <actions action="true_action" >
+        <action>
+            <key>check</key>
+            <val>pass</val>
+        </action>
+        <action>
+            <key>limit</key>
+            <val>today</val>
+        </action>
+    </actions>
+    <actions action="false_action" >
+        <action>
+            <key>check</key>
+            <val>fail</val>
+        </action>
+    </actions>
+</action_rule>
