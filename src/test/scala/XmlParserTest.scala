@@ -1,19 +1,31 @@
 import ImplicitConverters._
-import XmlParser.cond
+import XmlParser.testable
 import org.scalatest.FunSuite
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
 class XmlParserTest extends FunSuite with JavaTokenParsers {
-  test("cond") {
+  test("testable") {
     val s =
-      """<cond>
-        |    <key>status</key>
-        |    <val>%equal(ng)</val>
-        |</cond>""".stripMargin
+      """<test type="OR">
+        |    <test type="AND">
+        |        <cond>
+        |            <key>status</key>
+        |            <val>%equal(ng)</val>
+        |        </cond>
+        |        <cond>
+        |            <key>reason</key>
+        |            <val>%contains(system)</val>
+        |        </cond>
+        |    </test>
+        |    <cond>
+        |        <key>status</key>
+        |        <val>%equal(ok)</val>
+        |    </cond>
+        |</test>""".stripMargin
 
-    val exp = "status" $equals "ng"
+    val exp = ("status" $equals "ng") && ("reason" $contains "system") || ("status" $equals "ok")
 
-    assert(XmlParser(cond, s) == exp)
+    assert(XmlParser(testable, s) == exp)
   }
 }
