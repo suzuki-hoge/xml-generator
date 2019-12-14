@@ -19,6 +19,14 @@ object XmlParser extends JavaTokenParsers {
 
   private def value: Parser[Value] = identifier ^^ Value
 
+  def action: Parser[Action] = assignment
+
+  def assignment: Parser[Assignment] = "<action>" ~> varName ~ varValue <~ "</action>" ^^ (x => Assignment(x._1, x._2))
+
+  def varName: Parser[VarName] = "<key>" ~> identifier <~ "</key>" ^^ VarName
+
+  def varValue: Parser[VarValue] = "<val>" ~> identifier <~ "</val>" ^^ VarValue
+
   private def identifier: Parser[String] = "[a-z_]+".r
 
   def apply[T](parser: Parser[T], s: String): T = parse(parser, s).get
