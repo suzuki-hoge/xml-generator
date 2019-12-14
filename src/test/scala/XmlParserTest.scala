@@ -1,43 +1,59 @@
 import ImplicitConverters._
-import XmlParser.{assignment, testable}
+import XmlParser.statement
 import org.scalatest.FunSuite
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
 class XmlParserTest extends FunSuite with JavaTokenParsers {
-  test("testable") {
+  test("statement") {
     val s =
-      """<test type="OR">
-        |    <test type="AND">
+      """<cond_rule>
+        |  <conds>
+        |    <test type="OR">
+        |      <test type="AND">
         |        <cond>
-        |            <key>status</key>
-        |            <val>%equal(ng)</val>
+        |          <key>status</key>
+        |          <val>%equal(ng)</val>
         |        </cond>
         |        <cond>
-        |            <key>reason</key>
-        |            <val>%contains(system)</val>
+        |          <key>reason</key>
+        |          <val>%contains(system)</val>
         |        </cond>
-        |    </test>
-        |    <cond>
+        |      </test>
+        |      <cond>
         |        <key>status</key>
         |        <val>%equal(ok)</val>
-        |    </cond>
-        |</test>""".stripMargin
+        |      </cond>
+        |    </test>
+        |    <true action="true_action" />
+        |    <false action="false_action" />
+        |  </conds>
+        |</cond_rule>
+        |
+        |<action_rule>
+        |  <actions action="true_action">
+        |    <action>
+        |      <key>check</key>
+        |      <val>pass</val>
+        |    </action>
+        |    <action>
+        |      <key>limit</key>
+        |      <val>today</val>
+        |    </action>
+        |  </actions>
+        |  <actions action="false_action">
+        |    <action>
+        |      <key>check</key>
+        |      <val>fail</val>
+        |    </action>
+        |  </actions>
+        |</action_rule>""".stripMargin
 
-    val exp = ("status" $equals "ng") && ("reason" $contains "system") || ("status" $equals "ok")
+    val exp =
+      If(("status" $equals "ng") && ("reason" $contains "system") || ("status" $equals "ok"))
+        ._then("check" is "pass", "limit" is "today")
+        ._else("check" is "fail")
 
-    assert(XmlParser(testable, s) == exp)
-  }
-
-  test("assignment") {
-    val s =
-      """<action>
-        |    <key>check</key>
-        |    <val>pass</val>
-        |</action>""".stripMargin
-
-    val exp = "check" is "pass"
-
-    assert(XmlParser(assignment, s) == exp)
+    assert(XmlParser(statement, s) == exp)
   }
 }

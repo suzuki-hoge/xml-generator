@@ -1,6 +1,16 @@
 import scala.util.parsing.combinator.JavaTokenParsers
 
 object XmlParser extends JavaTokenParsers {
+  def statement: Parser[Statement] = condRule ~ actionRule ^^ (x => Statement(x._1, x._2._1, x._2._2))
+
+  def condRule: Parser[Testable] = "<cond_rule>" ~ "<conds>" ~> testable <~ "<true action=\"true_action\" />" ~ "<false action=\"false_action\" />" ~ "</conds>" ~ "</cond_rule>"
+
+  def actionRule: Parser[(Seq[Action], Seq[Action])] = "<action_rule>" ~> thenAction ~ elseAction <~ "</action_rule>" ^^ (x => (x._1, x._2))
+
+  def thenAction: Parser[Seq[Action]] = "<actions action=\"true_action\">" ~> rep1(action) <~ "</actions>"
+
+  def elseAction: Parser[Seq[Action]] = "<actions action=\"false_action\">" ~> rep1(action) <~ "</actions>"
+
   def testable: Parser[Testable] = test | cond
 
   def test: Parser[Test] = "<test type=\"" ~> operator ~ "\">" ~ testable ~ testable <~ "</test>" ^^ { case o ~ _ ~ t1 ~ t2 => Test(t1, t2, o) }
