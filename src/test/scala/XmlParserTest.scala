@@ -1,10 +1,7 @@
 import ImplicitConverters._
-import XmlParser.statement
 import org.scalatest.FunSuite
 
-import scala.util.parsing.combinator.JavaTokenParsers
-
-class XmlParserTest extends FunSuite with JavaTokenParsers {
+class XmlParserTest extends FunSuite {
   test("statement") {
     val s =
       """<cond_rule>
@@ -54,6 +51,6 @@ class XmlParserTest extends FunSuite with JavaTokenParsers {
         ._then("check" is "pass", "limit" is "today")
         ._else("check" is "fail")
 
-    assert(XmlParser(statement, s) == exp)
+    assert(XmlParser(s) == exp)
   }
 }

@@ -1,43 +1,55 @@
 import scala.util.parsing.combinator.JavaTokenParsers
 
 object XmlParser extends JavaTokenParsers {
-  def statement: Parser[Statement] = condRule ~ actionRule ^^ (x => Statement(x._1, x._2._1, x._2._2))
+  private def statement: Parser[Statement] = {
+    def condRule: Parser[Testable] = "<cond_rule>" ~ "<conds>" ~> testable <~ "<true action=\"true_action\" />" ~ "<false action=\"false_action\" />" ~ "</conds>" ~ "</cond_rule>"
 
-  def condRule: Parser[Testable] = "<cond_rule>" ~ "<conds>" ~> testable <~ "<true action=\"true_action\" />" ~ "<false action=\"false_action\" />" ~ "</conds>" ~ "</cond_rule>"
+    def thenAction: Parser[Seq[Action]] = "<actions action=\"true_action\">" ~> rep1(action) <~ "</actions>"
 
-  def actionRule: Parser[(Seq[Action], Seq[Action])] = "<action_rule>" ~> thenAction ~ elseAction <~ "</action_rule>" ^^ (x => (x._1, x._2))
+    def elseAction: Parser[Seq[Action]] = "<actions action=\"false_action\">" ~> rep1(action) <~ "</actions>"
 
-  def thenAction: Parser[Seq[Action]] = "<actions action=\"true_action\">" ~> rep1(action) <~ "</actions>"
+    condRule ~ "<action_rule>" ~ thenAction ~ elseAction ~ "</action_rule>" ^^ { case t ~ _ ~ tA ~ eA ~ _ => Statement(t, tA, eA) }
+  }
 
-  def elseAction: Parser[Seq[Action]] = "<actions action=\"false_action\">" ~> rep1(action) <~ "</actions>"
+  private def testable: Parser[Testable] = {
+    def test: Parser[Test] = {
+      def operator: Parser[Operator] = "AND" ^^ (_ => And) | "OR" ^^ (_ => Or)
 
-  def testable: Parser[Testable] = test | cond
+      "<test type=\"" ~> operator ~ "\">" ~ testable ~ testable <~ "</test>" ^^ { case o ~ _ ~ t1 ~ t2 => Test(t1, t2, o) }
+    }
 
-  def test: Parser[Test] = "<test type=\"" ~> operator ~ "\">" ~ testable ~ testable <~ "</test>" ^^ { case o ~ _ ~ t1 ~ t2 => Test(t1, t2, o) }
+    def cond: Parser[Cond] = {
+      def key: Parser[Key] = "<key>" ~> identifier <~ "</key>" ^^ Key
 
-  private def operator: Parser[Operator] = "AND" ^^ (_ => And) | "OR" ^^ (_ => Or)
+      def method: Parser[Method] = {
+        def $equals: Parser[Equals] = "%equal(" ~> value <~ ")" ^^ Equals
 
-  def cond: Parser[Cond] = "<cond>" ~> key ~ method <~ "</cond>" ^^ (x => Cond(x._1, x._2))
+        def $contains: Parser[Contains] = "%contains(" ~> value <~ ")" ^^ Contains
 
-  def key: Parser[Key] = "<key>" ~> identifier <~ "</key>" ^^ Key
+        def value: Parser[Value] = identifier ^^ Value
 
-  def method: Parser[Method] = "<val>" ~> ($equals | $contains) <~ "</val>"
+        "<val>" ~> ($equals | $contains) <~ "</val>"
+      }
 
-  private def $equals: Parser[Equals] = "%equal(" ~> value <~ ")" ^^ Equals
+      "<cond>" ~> key ~ method <~ "</cond>" ^^ { case k ~ v => Cond(k, v) }
+    }
 
-  private def $contains: Parser[Contains] = "%contains(" ~> value <~ ")" ^^ Contains
+    test | cond
+  }
 
-  private def value: Parser[Value] = identifier ^^ Value
+  private def action: Parser[Action] = {
+    def assignment: Parser[Assignment] = {
+      def varName: Parser[VarName] = "<key>" ~> identifier <~ "</key>" ^^ VarName
 
-  def action: Parser[Action] = assignment
+      def varValue: Parser[VarValue] = "<val>" ~> identifier <~ "</val>" ^^ VarValue
 
-  def assignment: Parser[Assignment] = "<action>" ~> varName ~ varValue <~ "</action>" ^^ (x => Assignment(x._1, x._2))
+      "<action>" ~> varName ~ varValue <~ "</action>" ^^ { case n ~ v => Assignment(n, v) }
+    }
 
-  def varName: Parser[VarName] = "<key>" ~> identifier <~ "</key>" ^^ VarName
-
-  def varValue: Parser[VarValue] = "<val>" ~> identifier <~ "</val>" ^^ VarValue
+    assignment
+  }
 
   private def identifier: Parser[String] = "[a-z_]+".r
 
-  def apply[T](parser: Parser[T], s: String): T = parse(parser, s).get
+  def apply(s: String): Statement = parse(statement, s).get
 }
