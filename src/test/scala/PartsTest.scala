@@ -8,7 +8,7 @@ class PartsTest extends FunSuite {
         ._then("check" is "pass", "limit" is "today")
         ._else("check" is "fail")
 
-    val exp =
+    val xml =
       """<cond_rule>
         |  <conds>
         |    <test type="OR">
@@ -51,6 +51,15 @@ class PartsTest extends FunSuite {
         |  </actions>
         |</action_rule>""".stripMargin
 
-    assert(statement.toXml == exp)
+    assert(statement.toXml == xml)
+
+    val scala =
+      """import ImplicitConverters._
+        |
+        |If(("status" $equals "ng") && ("reason" $contains "system") || ("status" $equals "ok"))
+        |  ._then("check" is "pass", "limit" is "today")
+        |  ._else("check" is "fail")""".stripMargin
+
+    assert(statement.toScala == scala)
   }
 }

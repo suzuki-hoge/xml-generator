@@ -1,5 +1,7 @@
 trait Testable {
   def toXml(indent: Indent): String
+
+  def toScala: String
 }
 
 case class Cond(key: Key, method: Method) extends Testable {
@@ -12,6 +14,8 @@ case class Cond(key: Key, method: Method) extends Testable {
        |${key.toXml(indent + 1)}
        |${method.toXml(indent + 1)}
        |$indent</cond>""".stripMargin
+
+  override def toScala: String = s"(${key.toScala} ${method.toScala})"
 }
 
 case class Test(testable1: Testable, testable2: Testable, operator: Operator) extends Testable {
@@ -20,20 +24,30 @@ case class Test(testable1: Testable, testable2: Testable, operator: Operator) ex
   def ||(other: Testable): Test = Test(this, other, Or)
 
   override def toXml(indent: Indent): String =
-    s"""$indent<test type="$operator">
+    s"""$indent<test type="${operator.toXml}">
        |${testable1.toXml(indent + 1)}
        |${testable2.toXml(indent + 1)}
        |$indent</test>""".stripMargin
+
+  override def toScala: String = s"${testable1.toScala} ${operator.toScala} ${testable2.toScala}"
 }
 
-trait Operator
+trait Operator {
+  def toXml: String
+
+  def toScala: String
+}
 
 object And extends Operator {
-  override def toString: String = "AND"
+  override def toXml: String = "AND"
+
+  override def toScala: String = "&&"
 }
 
 object Or extends Operator {
-  override def toString: String = "OR"
+  override def toXml: String = "OR"
+
+  override def toScala: String = "||"
 }
 
 case class Key(v: String) {
@@ -42,24 +56,34 @@ case class Key(v: String) {
   def $contains(value: Value): Cond = Cond(this, Contains(value))
 
   def toXml(indent: Indent): String = s"$indent<key>$v</key>"
+
+  def toScala: String = s""""$v""""
 }
 
 trait Method {
   def toXml(indent: Indent): String
+
+  def toScala: String
 }
 
 case class Equals(value: Value) extends Method {
   override def toXml(indent: Indent): String = s"$indent<val>%equal(${value.v})</val>"
+
+  override def toScala: String = s"""$$equals "${value.v}""""
 }
 
 case class Contains(value: Value) extends Method {
   override def toXml(indent: Indent): String = s"$indent<val>%contains(${value.v})</val>"
+
+  override def toScala: String = s"""$$contains "${value.v}""""
 }
 
 case class Value(v: String)
 
 trait Action {
   def toXml(indent: Indent): String
+
+  def toScala: String
 }
 
 case class Assignment(name: VarName, value: VarValue) extends Action {
@@ -68,6 +92,8 @@ case class Assignment(name: VarName, value: VarValue) extends Action {
        |${name.toXml(indent + 1)}
        |${value.toXml(indent + 1)}
        |$indent</action>""".stripMargin
+
+  override def toScala: String = s""""${name.v}" is "${value.v}""""
 }
 
 case class VarName(v: String) {
@@ -106,6 +132,13 @@ case class Statement(testable: Testable, thenActions: Seq[Action], elseActions: 
        |${elseActions.map(_.toXml(Indent(2))).mkString("\n")}
        |  </actions>
        |</action_rule>""".stripMargin
+
+  def toScala: String =
+    s"""import ImplicitConverters._
+       |
+       |If(${testable.toScala})
+       |  ._then(${thenActions.map(_.toScala).mkString(", ")})
+       |  ._else(${elseActions.map(_.toScala).mkString(", ")})""".stripMargin
 }
 
 case class Indent(v: Int) {
